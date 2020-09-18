@@ -33,11 +33,11 @@ def detectar_cara (imagen):
     rectangulos = face_cascade.detectMultiScale(img_copy)
     for (x,y,w,h) in rectangulos:
         cv2.rectangle(img_copy,pt1= (x,y),pt2=(x+w, y+h), color=color_rectangle, thickness=4)
-        # GPIO.output(pin, GPIO.HIGH)
-        servoMove()
-        # time.sleep(0.010)
-        # GPIO.output(pin, GPIO.LOW)
-        # time.sleep(0.020)
+        GPIO.output(pin, GPIO.HIGH)
+        time.sleep(0.010)
+        GPIO.output(pin, GPIO.LOW)
+        time.sleep(0.020)
+        # servoMove()
     return img_copy
 
 def servoMove():
