@@ -9,13 +9,13 @@ face_cascade = cv2.CascadeClassifier(cascade)
 
 
 GPIO.setwarnings(False)
-# GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BOARD)
 
 direccion = 24 # pin DIR
 step = 26 # pin Step
-numSteps = 400
-microPausa = 0.0009
-microPausa1 = 0.002
+numSteps = 200
+microPausa = 0.002
+# microPausa1 = 0.0002
 
 # GPIO.setup(direccion, GPIO.OUT)
 # GPIO.setup(step, GPIO.OUT)
@@ -25,47 +25,69 @@ microPausa1 = 0.002
 color_rectangle = (59, 67, 245)
 cap = cv2.VideoCapture(0)
 
+face_time = 0
+
 # Funcion para detectar los rostros en el video
 def Detectar_cara (imagen):
+    global face_time
     img_copy = imagen.copy()
-    rectangulos = face_cascade.detectMultiScale(img_copy)
+    rectangulos = face_cascade.detectMultiScale(img_copy, 1.3, 5)
+    if len(rectangulos) > 0:
+      face_time += 1
+      print()
+      if face_time > 15:
+        print('\t\tRostro detectado')
+        finished_step = Motor_nema()
+        if finished_step:
+          sys.exit(0)          
+      else:
+        print('\tNo hay rostro')
+        GPIO.cleanup()
     for (x,y,w,h) in rectangulos:
-        cv2.rectangle(img_copy,pt1= (x,y),pt2=(x+w, y+h), color=color_rectangle, thickness=4)
-        # Motor_nema()
-    # if img_copy:
-    print('\t\t Detectando algo \n\t{}'.format(img_copy))
+        cv2.rectangle(img_copy,pt1= (x,y),pt2=(x+w, y+h), color=color_rectangle, thickness=4)      
     return img_copy
 
 
 
 
+cont = 0
 def Motor_nema():
-  cont = 0
+  completado = False
+  global cont 
   while True:
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(direccion, GPIO.OUT)
     GPIO.setup(step, GPIO.OUT)
-
     print('Work {}'.format(cont))
     GPIO.output(direccion, 0)
+    for item in range(0, numSteps):
+      GPIO.output(step, 1)  
+      sleep(microPausa)
+      GPIO.output(step, 0)
+    sleep(1.5) # Cambio de direccion
+    GPIO.output(direccion, 1)
     for item in range(0, numSteps):
       GPIO.output(step, 1)
       sleep(microPausa)
       GPIO.output(step, 0)
-    sleep(1) # Cambio de direccion
-    GPIO.output(direccion, 1)
-    for item in range(0, numSteps):
-      GPIO.output(step, 1)
-      sleep(microPausa1)
-      GPIO.output(step, 0)
     cont += 1
+    print('El contador \t{}'.format(cont))
+    if cont >= 15:
+      print("Se acabo el programa")
+      # sys.exit(0)
+      print("Rompiendo el ciclo")
+      completado = True
+      return completado
+      break
+    else:
+      completado = False 
+      return completado
 
-    # if cont > 5:
-    #   print("Se acabo el programa")
-    #   sys.exit(0)
-    #   print("Rompiendo el ciclo")
-    #   break          
-  GPIO.cleanup()
+  # GPIO.output(direccion, 0)
+  # GPIO.output(step, 0)
+  # GPIO.setwarnings(False)          
+  # GPIO.cleanup()
+  
   
     
 
@@ -78,7 +100,8 @@ def Motor_nema():
 #     sys.exit(0)
 
 # Motor_nema()
-
+# sleep(5)
+# sys.exit(0)
 
 while True:
   _, frame = cap.read()
@@ -93,4 +116,4 @@ GPIO.cleanup()
 # Limpiamos y destruimos todas la ventanas creadas
 cap.release()
 cv2.destroyAllWindows()
-sys.exit(0)
+# sys.exit(0)
